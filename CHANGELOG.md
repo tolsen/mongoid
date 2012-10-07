@@ -3,9 +3,54 @@
 For instructions on upgrading to newer versions, visit
 [mongoid.org](http://mongoid.org/docs/upgrading.html).
 
-## 3.0.6 (branch 3.0.0-stable)
+## 3.0.7 (branch 3.0.0-stable)
 
 ### Resolved Issues
+
+* mongoid/moped\#82 Aliased fields now work with `Criteria#distinct`.
+
+* \#2423 Fixed embedded document's `update_all` to perform the correct $set
+  when using off a criteria.
+
+* \#2414 Index definitions now respect aliased fields.
+
+* \#2413 Enumerable targets now properly return enumerators when no blocks
+  are provided. (Andrew Smith)
+
+* \#2411 BigDecimal fields are properly stored as strings when mongoizing
+  integers and floats.
+
+* \#2409 Don't warn about missing mongoid.yml if configured programatically.
+
+* \#2403 Return false on `update_all` of an embeds many with no documents.
+
+* \#2401 Bring back the ability to merge a criteria with a hash.
+
+* \#2399 Reject blank id values on has_many `Model#object_ids=`.
+  (Tiago Rafael Godinho)
+
+* \#2393 Ensure `inverse_of` is respected when using polymorphic relations.
+
+* \#2388 Map/reduce properly uses `sort` instead of `orderby` in the execution
+  of the command. (Alex Tsibulya)
+
+* \#2386 Allow geo haystack and bits parameters in indexes. (Bradley Rees)
+
+* \#2380 `Model#becomes` now properly copies over dirty attributes.
+
+* \#2331 Don't double push child documents when extra saves are called in an
+  after_create callback.
+
+## 3.0.6
+
+### Resolved Issues
+
+* \#2375 Uniqueness validation scoping now works with aliased fields.
+
+* \#2372 Ensure that all atomic operations mongoize values before executing.
+
+* \#2370 Paranoid documents now properly don't get deleted when using
+  `dependent: :restrict` and an exception is raised.
 
 * \#2365 Don't do anything when trying to replace an embeds_one with the same
   document.

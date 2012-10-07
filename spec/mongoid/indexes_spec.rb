@@ -64,7 +64,7 @@ describe Mongoid::Indexes do
 
       let(:klass) do
         Class.new do
-          include Mongoid::Indexes
+          include Mongoid::Document
           def self.hereditary?
             true
           end
@@ -87,7 +87,23 @@ describe Mongoid::Indexes do
 
     let(:klass) do
       Class.new do
-        include Mongoid::Indexes
+        include Mongoid::Document
+        field :a, as: :authentication_token
+      end
+    end
+
+    context "when indexing a field that is aliased" do
+
+      before do
+        klass.index({ authentication_token: 1 }, { unique: true })
+      end
+
+      let(:options) do
+        klass.index_options[a: 1]
+      end
+
+      it "sets the index with unique options" do
+        options.should eq(unique: true)
       end
     end
 
@@ -184,7 +200,7 @@ describe Mongoid::Indexes do
     context "when providing a geospacial index" do
 
       before do
-        klass.index({ location: "2d" }, { min: -200, max: 200 })
+        klass.index({ location: "2d" }, { min: -200, max: 200, bits: 32 })
       end
 
       let(:options) do
@@ -192,7 +208,22 @@ describe Mongoid::Indexes do
       end
 
       it "sets the geospacial index" do
-        options.should eq({ min: -200, max: 200 })
+        options.should eq({ min: -200, max: 200, bits: 32 })
+      end
+    end
+
+    context "when providing a geo haystack index" do
+
+      before do
+        klass.index({ location: "geoHaystack" }, { min: -200, max: 200, bucket_size: 0.5 })
+      end
+
+      let(:options) do
+        klass.index_options[location: "geoHaystack"]
+      end
+
+      it "sets the geo haystack index" do
+        options.should eq({ min: -200, max: 200, bucketSize: 0.5 })
       end
     end
 

@@ -2449,6 +2449,56 @@ describe Mongoid::Relations::Embedded::Many do
     end
   end
 
+  describe "#update_all" do
+
+    context "when there are no documents present" do
+
+      let(:person) do
+        Person.create
+      end
+
+      it "updates nothing" do
+        person.addresses.update_all(street: "test").should be_false
+      end
+    end
+
+    context "when documents are present" do
+
+      let(:person) do
+        Person.create
+      end
+
+      let!(:address) do
+        person.addresses.create(street: "Hobrecht", number: 27)
+      end
+
+      context "when updating with a where clause" do
+
+        before do
+          person.addresses.
+            where(street: "Hobrecht").
+            update_all(number: 26, post_code: "12437")
+        end
+
+        it "resets the matching dirty flags" do
+          address.should_not be_changed
+        end
+
+        it "updates the first field" do
+          address.reload.number.should eq(26)
+        end
+
+        it "updates the second field" do
+          address.reload.post_code.should eq("12437")
+        end
+
+        it "does not wipe out other fields" do
+          address.reload.street.should eq("Hobrecht")
+        end
+      end
+    end
+  end
+
   describe ".valid_options" do
 
     it "returns the valid options" do
@@ -3347,6 +3397,28 @@ describe Mongoid::Relations::Embedded::Many do
 
     it "does not duplicate the second relation" do
       person.reload.appointments.count.should eq(2)
+    end
+  end
+
+  context "when saving at the parent level" do
+
+    let!(:server) do
+      Server.new(name: "staging")
+    end
+
+    let!(:filesystem) do
+      server.filesystems.build
+    end
+
+    context "when the parent has an after create callback" do
+
+      before do
+        server.save
+      end
+
+      it "does not push the embedded documents twice" do
+        server.reload.filesystems.count.should eq(1)
+      end
     end
   end
 end
