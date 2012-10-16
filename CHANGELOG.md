@@ -3,9 +3,25 @@
 For instructions on upgrading to newer versions, visit
 [mongoid.org](http://mongoid.org/docs/upgrading.html).
 
-## 3.0.7 (branch 3.0.0-stable)
+## 3.0.9
 
 ### Resolved Issues
+
+* \#2463 Fixed the broken `rails g mongoid:config` from a fresh repo.
+
+* \#2456 The descendants cache is now reset when the document is inherited
+  again. (Kostyantyn Stepanyuk)
+
+* \#2453 `Model#write_attribute` now properly works with aliased fields.
+  (Campbell Allen)
+
+* \#2444 Removed extra dirty methods creation call. (Kostyantyn Stepanyuk)
+
+* \#2440/\#2435 Pass mass assignment options down to children when setting via
+  nested attributes or embedded documents.
+
+* \#2439 Fixed memory leak in threaded selection of returned fields.
+  (Tim Olsen)
 
 * mongoid/moped\#82 Aliased fields now work with `Criteria#distinct`.
 
@@ -40,6 +56,8 @@ For instructions on upgrading to newer versions, visit
 
 * \#2331 Don't double push child documents when extra saves are called in an
   after_create callback.
+
+## 3.0.8 (Yanked)
 
 ## 3.0.6
 
