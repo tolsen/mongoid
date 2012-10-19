@@ -57,7 +57,11 @@ module Mongoid
     #
     # @since 3.0.0
     def sessions
-      Thread.current["[mongoid]:sessions"] ||= {}
+      #Thread.current["[mongoid]:sessions"] ||= {}
+
+      # Non-threadsafe Hack!  Use global sessions
+      # to prevent file descriptor leak with tomcat
+      $mongoid_sessions ||= {}
     end
 
     # Are in the middle of executing the named stack
