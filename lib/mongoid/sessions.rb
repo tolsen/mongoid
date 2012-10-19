@@ -106,10 +106,7 @@ module Mongoid
       #
       # @since 3.0.0
       def default
-        #Threaded.sessions[:default] ||= Sessions::Factory.default
-
-        # Non-threadsafe hack to stop file descriptors from leaking with JRuby/Tomcat
-        $mongoid_default_session ||= Sessions::Factory.default
+        Threaded.sessions[:default] ||= Sessions::Factory.default
       end
 
       # Get a session with the provided name.
@@ -123,9 +120,6 @@ module Mongoid
       #
       # @since 3.0.0
       def with_name(name)
-        # Part of above global default session hack
-        return default if name.to_sym == :default
-        
         Threaded.sessions[name.to_sym] ||= Sessions::Factory.create(name)
       end
     end
