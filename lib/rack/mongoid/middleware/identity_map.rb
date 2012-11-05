@@ -31,11 +31,16 @@ module Rack
         #
         # @since 2.1.0
         def call(env)
+          Rails.logger.info "Rack::Mongoid::Middleware::IdentityMap#call() START"
           response = @app.call(env)
           response[2] = ::Rack::BodyProxy.new(response[2]) do
+            Rails.logger.info "CLEARING IDENTITY MAP"
             ::Mongoid::IdentityMap.clear
           end
           response
+        rescue => e
+          Rails.logger.info "Rack::Mongoid::Middleware::IdentityMap#call() EXCEPTION !"
+          raise
         end
 
         # Passenger 3 does not execute the block provided to a Rack::BodyProxy
