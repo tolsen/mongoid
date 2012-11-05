@@ -117,7 +117,7 @@ module Mongoid
       # @since 3.0.0
       def each
         if block_given?
-          documents[skipping || 0, limiting || documents.length].each do |doc|
+          (documents[skipping || 0, limiting || documents.length] || []).each do |doc|
             yield doc
           end
         else
@@ -286,7 +286,7 @@ module Mongoid
         docs.each do |doc|
           @selector ||= root.atomic_selector
           doc.write_attributes(attributes)
-          updates["$set"].merge!(doc.atomic_updates["$set"])
+          updates["$set"].merge!(doc.atomic_updates["$set"] || {})
           doc.move_changes
         end
         collection.find(selector).update(updates)

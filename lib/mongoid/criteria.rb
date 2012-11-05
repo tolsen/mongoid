@@ -291,6 +291,7 @@ module Mongoid
       id = extract_id
       id = klass.fields["_id"].mongoize(id) if id
       doc = IdentityMap.get(klass, id || selector.except("_type"))
+      return nil if doc == {}
       doc && doc.matches?(selector) ? doc : first
     end
 
@@ -526,6 +527,26 @@ module Mongoid
       super
     end
 
+    # Tell the next persistance operation to query from a specific collection,
+    # database or session.
+    #
+    # @example Send the criteria to another collection.
+    #   Band.where(name: "Depeche Mode").with(collection: "artists")
+    #
+    # @param [ Hash ] options The storage options.
+    #
+    # @option options [ String, Symbol ] :collection The collection name.
+    # @option options [ String, Symbol ] :database The database name.
+    # @option options [ String, Symbol ] :session The session name.
+    #
+    # @return [ Criteria ] The criteria.
+    #
+    # @since 3.0.0
+    def with(options)
+      Threaded.set_persistence_options(klass, options)
+      self
+    end
+
     # Get a version of this criteria without the options.
     #
     # @example Get the criteria without options.
@@ -668,7 +689,7 @@ module Mongoid
           klass.send(name, *args, &block)
         end
       else
-        return entries.send(name, *args)
+        return entries.send(name, *args, &block)
       end
     end
 

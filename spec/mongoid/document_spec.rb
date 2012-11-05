@@ -327,7 +327,7 @@ describe Mongoid::Document do
         end
       end
 
-      context "without updated_at" do
+      context "without updated_at, with Timestamps" do
 
         before do
           document.updated_at = nil
@@ -337,6 +337,20 @@ describe Mongoid::Document do
           document.cache_key.should eq("dokuments/#{document.id}")
         end
       end
+
+      context "without updated_at, without Timestamps" do
+        let(:artist) do
+          Artist.new
+        end
+        before do
+          artist.save
+        end
+
+        it "should have the id key name" do
+          artist.cache_key.should eq("artists/#{artist.id}")
+        end
+      end
+
     end
   end
 
@@ -591,6 +605,18 @@ describe Mongoid::Document do
 
       it 'should not include the key of association' do
         person.as_document.should_not have_key("phones")
+      end
+    end
+
+    context "when removing an embedded document" do
+
+      before do
+        person.save
+        person.addresses.delete(address)
+      end
+
+      it "does not include the document in the hash" do
+        person.as_document["addresses"].should be_empty
       end
     end
   end
@@ -871,6 +897,10 @@ describe Mongoid::Document do
 
         it "copies attributes" do
           became.title.should eq('Sir')
+        end
+
+        it "keeps the same object id" do
+          became.id.should eq(obj.id)
         end
 
         context "when the document has embedded documents" do

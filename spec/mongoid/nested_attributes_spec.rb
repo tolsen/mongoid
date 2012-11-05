@@ -1258,6 +1258,50 @@ describe Mongoid::NestedAttributes do
 
               context "when allow_destroy is true" do
 
+                context "when the parent validation failed" do
+
+                  before(:all) do
+                    Band.validates_presence_of :name
+                    Band.accepts_nested_attributes_for :records, :allow_destroy => true
+                  end
+
+                  after(:all) do
+                    Band.send(:undef_method, :records_attributes=)
+                    Band.reset_callbacks(:validate)
+                  end
+
+                  let!(:band) do
+                    Band.create(name: "Depeche Mode")
+                  end
+
+                  let!(:record) do
+                    band.records.create
+                  end
+
+                  let(:attributes) do
+                    {
+                      name: nil,
+                      records_attributes: { "foo" => { "id" => record.id, "_destroy" => true }}
+                    }
+                  end
+
+                  before do
+                    band.update_attributes(attributes)
+                  end
+
+                  it "does not remove the child document" do
+                    band.records.should_not be_empty
+                  end
+
+                  it "keeps the child flagged for destruction" do
+                    record.should be_flagged_for_destroy
+                  end
+
+                  it "does not persist any change" do
+                    band.reload.records.should eq([ record ])
+                  end
+                end
+
                 context "when the child accesses the parent after destroy" do
 
                   before(:all) do
@@ -1449,12 +1493,16 @@ describe Mongoid::NestedAttributes do
                               }
                           end
 
-                          it "removes the first document from the relation" do
-                            persisted.addresses.size.should eq(2)
+                          it "does not remove the first document from the relation" do
+                            persisted.addresses.size.should eq(3)
+                          end
+
+                          it "flags the destroyed document for removal" do
+                            address_one.should be_marked_for_destruction
                           end
 
                           it "does not delete the unmarked document" do
-                            persisted.addresses.first.street.should eq(
+                            persisted.addresses.second.street.should eq(
                               "Alexander Platz"
                             )
                           end
@@ -1466,7 +1514,7 @@ describe Mongoid::NestedAttributes do
                           end
 
                           it "has the proper persisted count" do
-                            persisted.addresses.count.should eq(1)
+                            persisted.addresses.count.should eq(2)
                           end
 
                           it "does not delete the removed document" do
@@ -1507,8 +1555,12 @@ describe Mongoid::NestedAttributes do
                               }
                           end
 
-                          it "removes the first document from the relation" do
-                            persisted.addresses.size.should eq(2)
+                          it "does not remove the first document from the relation" do
+                            persisted.addresses.size.should eq(3)
+                          end
+
+                          it "marks the first document for destruction" do
+                            address_one.should be_marked_for_destruction
                           end
 
                           it "adds the new document to the relation" do
@@ -1518,7 +1570,7 @@ describe Mongoid::NestedAttributes do
                           end
 
                           it "has the proper persisted count" do
-                            persisted.addresses.count.should eq(1)
+                            persisted.addresses.count.should eq(2)
                           end
 
                           it "does not delete the removed document" do
@@ -4330,11 +4382,49 @@ describe Mongoid::NestedAttributes do
 
     context "when nesting multiple levels" do
 
-      let(:person) do
+      let!(:person) do
         Person.create
       end
 
       context "when second level is a one to many" do
+
+        let(:person_one) do
+          Person.create
+        end
+
+        let!(:address_one) do
+          person_one.addresses.create(street: "hobrecht")
+        end
+
+        let!(:location_one) do
+          address_one.locations.create(name: "home")
+        end
+
+        context "when destroying a second level document" do
+
+          let(:attributes) do
+            { addresses_attributes:
+              { "0" =>
+                {
+                  _id: address_one.id,
+                  locations_attributes: { "0" => { _id: location_one.id, _destroy: true }}
+                }
+              }
+            }
+          end
+
+          before do
+            person_one.update_attributes(attributes)
+          end
+
+          it "deletes the document from the relation" do
+            address_one.locations.should be_empty
+          end
+
+          it "persists the change" do
+            address_one.reload.locations.should be_empty
+          end
+        end
 
         context "when adding new documents in both levels" do
 

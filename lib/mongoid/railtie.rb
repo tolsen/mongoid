@@ -118,7 +118,11 @@ module Rails
 
       # Need to include the Mongoid identity map middleware.
       initializer "include the identity map" do |app|
-        app.config.middleware.use "Rack::Mongoid::Middleware::IdentityMap"
+        if ::Mongoid.running_with_passenger?
+          app.config.middleware.use "Rack::Mongoid::Middleware::IdentityMap::Passenger"
+        else
+          app.config.middleware.use "Rack::Mongoid::Middleware::IdentityMap"
+        end
       end
 
       # Instantitate any registered observers after Rails initialization and
@@ -128,6 +132,26 @@ module Rails
           ::Mongoid::instantiate_observers
           ActionDispatch::Reloader.to_prepare do
             ::Mongoid.instantiate_observers
+          end
+        end
+      end
+
+      initializer "reconnect to master if application is preloaded" do
+        config.after_initialize do
+          # Unicorn clears the START_CTX when a worker is forked, so if we have
+          # data in START_CTX then we know we're being preloaded. Unicorn does
+          # not provide application-level hooks for executing code after the
+          # process has forked, so we reconnect lazily.
+          if defined?(Unicorn) && !Unicorn::HttpServer::START_CTX.empty?
+            ::Mongoid.default_session.disconnect
+          end
+
+          # Passenger provides the :starting_worker_process event for executing
+          # code after it has forked, so we use that and reconnect immediately.
+          if ::Mongoid.running_with_passenger?
+            PhusionPassenger.on_event(:starting_worker_process) do |forked|
+              ::Mongoid.default_session.disconnect if forked
+            end
           end
         end
       end

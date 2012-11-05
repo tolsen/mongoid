@@ -1759,6 +1759,30 @@ describe Mongoid::Criteria do
         from_db.should eq(band)
       end
     end
+
+    context "when the selector is cleared in the identity map" do
+
+      let!(:band) do
+        Band.create(name: "Depeche Mode")
+      end
+
+      let(:criteria) do
+        Band.where(name: "Depeche Mode")
+      end
+
+      before do
+        Mongoid::IdentityMap.clear
+        Mongoid::IdentityMap.clear_many(Band, { "name" => "Depeche Mode" })
+      end
+
+      let(:from_db) do
+        criteria.from_map_or_db
+      end
+
+      it "returns nil" do
+        from_db.should be_nil
+      end
+    end
   end
 
   describe "#multiple_from_map_or_db" do
@@ -3687,6 +3711,44 @@ describe Mongoid::Criteria do
     end
   end
 
+  describe "#uniq" do
+
+    let!(:band_one) do
+      Band.create(name: "New Order")
+    end
+
+    let!(:band_two) do
+      Band.create(name: "New Order")
+    end
+
+    let(:criteria) do
+      Band.all
+    end
+
+    it "passes the block through method_missing" do
+      criteria.uniq(&:name).should eq([ band_one ])
+    end
+  end
+
+  describe "#with" do
+
+    let!(:criteria) do
+      Band.where(name: "Depeche Mode").with(collection: "artists")
+    end
+
+    after do
+      Band.persistence_options.clear
+    end
+
+    it "retains the criteria selection" do
+      criteria.selector.should eq("name" => "Depeche Mode")
+    end
+
+    it "sets the persistence options" do
+      Band.persistence_options.should eq(collection: "artists")
+    end
+  end
+
   describe "#within_box" do
 
     before do
@@ -3780,6 +3842,7 @@ describe Mongoid::Criteria do
     end
 
     it "returns the matching documents" do
+      p criteria.to_a
       criteria.should eq([ match ])
     end
   end
