@@ -32,10 +32,15 @@ module Rack
         # @since 2.1.0
         def call(env)
           response = @app.call(env)
-          response[2] = ::Rack::BodyProxy.new(response[2]) do
+          response[2] = BodyProxy.new(response[2]) do
             ::Mongoid::IdentityMap.clear
           end
           response
+        rescue
+          # If we get here then the body will probably not be
+          # enumerated and we need to clear the identity map here
+          ::Mongoid::IdentityMap.clear
+          raise
         end
 
         # Passenger 3 does not execute the block provided to a Rack::BodyProxy
