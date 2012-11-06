@@ -31,15 +31,18 @@ module Rack
         #
         # @since 2.1.0
         def call(env)
-          Rails.logger.info "Rack::Mongoid::Middleware::IdentityMap#call() START"
+          Rails.logger.info "Rack::Mongoid::Middleware::IdentityMap#call() Start"
           response = @app.call(env)
-          response[2] = ::Rack::BodyProxy.new(response[2]) do
-            Rails.logger.info "CLEARING IDENTITY MAP"
+          response[2] = BodyProxy.new(response[2]) do
             ::Mongoid::IdentityMap.clear
+            Rails.logger.info "Rack::Mongoid::Middleware::IdentityMap#call() Finished each() .  Cleared IdentityMap"
           end
           response
-        rescue => e
-          Rails.logger.info "Rack::Mongoid::Middleware::IdentityMap#call() EXCEPTION !"
+        rescue
+          # If we get here then the body will probably not be
+          # enumerated and we need to clear the identity map here
+          ::Mongoid::IdentityMap.clear
+          Rails.logger.info "Rack::Mongoid::Middleware::IdentityMap#call() Exception.  Cleared IdentityMap"
           raise
         end
 
