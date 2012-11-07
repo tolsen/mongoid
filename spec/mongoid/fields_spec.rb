@@ -170,6 +170,20 @@ describe Mongoid::Fields do
     end
   end
 
+  describe "#aliased_fields" do
+
+    let(:person) do
+      Person.new
+    end
+
+    context "when the document is subclassed" do
+
+      it "does not include the child aliases" do
+        person.aliased_fields.keys.should_not include("spec")
+      end
+    end
+  end
+
   describe "#attribute_names" do
 
     context "when the document is a parent class" do
@@ -1149,6 +1163,28 @@ describe Mongoid::Fields do
 
       it "returns the proper big decimal" do
         band.sales.should eq(decimal)
+      end
+    end
+  end
+
+  context "when overriding a parent class field" do
+
+    context "when the field has a default value" do
+
+      let!(:canvas) do
+        Canvas.new
+      end
+
+      let!(:test) do
+        Canvas::Test.new
+      end
+
+      it "does not override the parent" do
+        canvas.foo.should eq("original")
+      end
+
+      it "overrides the default" do
+        test.foo.should eq("overridden")
       end
     end
   end
