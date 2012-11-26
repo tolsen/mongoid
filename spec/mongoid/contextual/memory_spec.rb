@@ -377,6 +377,26 @@ describe Mongoid::Contextual::Memory do
       described_class.new(criteria)
     end
 
+    context "when skip and limit outside of range" do
+
+      before do
+        context.skip(10).limit(2)
+      end
+
+      it "contains no documents" do
+        context.map(&:street).should be_empty
+      end
+
+      context "when calling next on the enumerator" do
+
+        it "raises a stop iteration error" do
+          expect {
+            context.each.next
+          }.to raise_error(StopIteration)
+        end
+      end
+    end
+
     context "when providing a block" do
 
       it "yields mongoid documents to the block" do
@@ -1072,6 +1092,25 @@ describe Mongoid::Contextual::Memory do
         described_class.new(criteria)
       end
 
+      context "when providing aliased fields" do
+
+        before do
+          context.update_all(suite: "10B")
+        end
+
+        it "updates the first matching document" do
+          hobrecht.suite.should eq("10B")
+        end
+
+        it "updates the last matching document" do
+          friedel.suite.should eq("10B")
+        end
+
+        it "does not update non matching docs" do
+          pfluger.suite.should be_nil
+        end
+      end
+
       context "when attributes are provided" do
 
         before do
@@ -1102,6 +1141,17 @@ describe Mongoid::Contextual::Memory do
 
           it "does not update non matching docs" do
             pfluger.reload.number.should be_nil
+          end
+        end
+
+        context "when updating the documents a second time" do
+
+          before do
+            context.update_all(number: 5)
+          end
+
+          it "does not error on the update" do
+            hobrecht.number.should eq(5)
           end
         end
       end

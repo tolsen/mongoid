@@ -444,8 +444,8 @@ module Mongoid
           re_define_method("#{meth}_translations=") do |value|
             attribute_will_change!(name)
             if value
-              value.update_values do |value|
-                field.type.mongoize(value)
+              value.update_values do |_value|
+                field.type.mongoize(_value)
               end
             end
             attributes[name] = value
@@ -483,9 +483,10 @@ module Mongoid
       end
 
       def field_for(name, options)
-        return Fields::Localized.new(name, options) if options[:localize]
-        return Fields::ForeignKey.new(name, options) if options[:identity]
-        Fields::Standard.new(name, options)
+        opts = options.merge(klass: self)
+        return Fields::Localized.new(name, opts) if options[:localize]
+        return Fields::ForeignKey.new(name, opts) if options[:identity]
+        Fields::Standard.new(name, opts)
       end
     end
   end

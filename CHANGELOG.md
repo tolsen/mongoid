@@ -3,6 +3,109 @@
 For instructions on upgrading to newer versions, visit
 [mongoid.org](http://mongoid.org/docs/upgrading.html).
 
+## 3.0.13
+
+### Resolved Issues
+
+* \#2548 Fix error when generating config file with a fresh app with Unicorn in
+  the gemset.
+
+## 3.0.12
+
+### Resolved Issues
+
+* \#2542 Allow embedded documents using `store_as` to properly alias in
+  criteria.
+
+* \#2541 Ensure that the type change is correct when upcasting/downcasting a
+  document via `Document#becomes` (Łukasz Bandzarewicz)
+
+* \#2529 Fields on subclasses that override fields in the parent where both have
+  defaults with procs now properly override the default in the subclass.
+
+* \#2528 Aliased fields need to be duped when subclassing.
+
+* \#2527 Ensure removal of docs in a `has_many` does a multi update when setting
+  to an empty array.
+
+## 3.0.11
+
+### Resolved Issues
+
+* \#2522 Fixed `Criteria#with` to return the criteria and not the class.
+
+* \#2518 Fix unit of work call for the identity map when using Passenger.
+
+* \#2512 Ensure nested attributes destroy works with the delayed destroys
+  introduced in 3.0.10 when multiple levels deep.
+
+* \#2509 Don't hit identity map an extra time when the returned value is an
+  empty hash. (Douwe Maan)
+
+## 3.0.10
+
+### Resolved Issues
+
+* \#2507 Ensure no extra db hits when eager loading has a mix of parents
+  with and without docs. (Douwe Maan)
+
+* \#2505 Ensure `update` and `update_all` from criteria properly handle
+  aliased fields. (Dmitry Krasnoukhov)
+
+* \#2504 `Model#becomes` properly keeps the same id.
+
+* \#2498 Criteria now properly pass provided blocks though `method_missing`.
+
+* \#2496 Embedded documents that were previously stored without ids now
+  properly update and get assigned ids from within Mongoid.
+
+* \#2494 All explicit atomic operations now properly respect aliased fields.
+
+* \#2493 Use `Class#name` instead of `Class#model_name` when setting
+  polymorphic types in case `model_name` has been overridden.
+
+* \#2491 Removed unnecessary merge call in cascadable children.
+
+* \#2485 Removing indexes now always uses strong consistency.
+
+* \#2483 Versioning now handles localized fields. (Lawrence Curtis)
+
+* \#2482 Store find parameters in the `DocumentNotFound` error.
+
+* \#2481 Map/reduce aggregations now properly handle Mongo's batching of
+  reduce jobs in groups of 100 with the state being passed through on the
+  count.
+
+* \#2476 Handle skip and limit outside of range on embeds_many relations
+  gracefully.
+
+* \#2474 Correctly detach 1-1 relations when the child is not yet loaded.
+  (Kostyantyn Stepanyuk)
+
+* \#2451 `relation.deleted` on embedded paranoid documents now works properly
+  again.
+
+* \#2472 Ensure `update_all` on embedded relations works properly when nothing
+  is actually going to be updated.
+
+* \#2469 Nullified documents on relations are now able to be re-added with the
+  same in memory instance.
+
+* \#2454 `Model#as_document` properly allows changes from having a relation to
+  the relation being removed. (James Almond)
+
+* \#2445 Mongoid middleware now properly supports both normal and streamed
+  responses and properly clears the identity map for either.
+
+* \#2367 Embedded documents that are to be deleted via nested attributes no
+  longer become immediately removed from the relation in case the parent
+  validation fails. Instead, they get flagged for destruction and then the
+  removal occurs upon the parent passing validation and going to persist.
+
+  Note this is a behaviour change, but since the API does not change and
+  the previous behaviour was incorrect and did not match AR this was able
+  to go into a point release.
+
 ## 3.0.9
 
 ### Resolved Issues
@@ -470,7 +573,7 @@ For instructions on upgrading to newer versions, visit
           Enumerable, or included gems that inject methods into these
           or Mongoid internals.
 
-* \#1753/#1649 A setter and getter for has_many relations to set it's
+* \#1753/#1649 A setter and getter for has_many relations to set its
   children is now provided. (Piotr Jakubowski)
 
         class Album
@@ -696,7 +799,7 @@ For instructions on upgrading to newer versions, visit
         band.with(database: "secondary).save!
         Band.with(collection: "artists").where(name: "Depeche Mode")
 
-* \#1291 You can now configure on a per-model basis where it's documents are
+* \#1291 You can now configure on a per-model basis where its documents are
   stored with the new and improved `store_in` macro.
 
         class Band
@@ -813,7 +916,7 @@ For instructions on upgrading to newer versions, visit
           index({ name: 1 }, { unique: true, background: true })
         end
 
-      Geospacial indexing needs "2d" as it's direction.
+      Geospacial indexing needs "2d" as its direction.
 
         class Venue
           include Mongoid::Document
@@ -980,11 +1083,11 @@ For instructions on upgrading to newer versions, visit
     If the id is set, but the document for it has not been persisted, accessing
     the relation will return empty results.
 
-    If the id is set and it's document is persisted, accessing the relation
+    If the id is set and its document is persisted, accessing the relation
     will return the document.
 
     If the id is set, but the base document is not saved afterwards, then
-    reloading will return the document to it's original state.
+    reloading will return the document to its original state.
 
 * \#1093 Field serialization strategies have changed on Array, Hash, Integer
   and Boolean to be more consistent and match AR where appropriate.
@@ -1142,7 +1245,31 @@ For instructions on upgrading to newer versions, visit
 * \#685 Attempting to use versioning with embedded documents will now
   raise a proper error alerting the developer this is not allowed.
 
-## 2.4.12 (branch: 2.4.0-stable)
+## 2.5.2 (branch: 2.5.0-stable)
+
+### Resolved Issues
+
+* \#2502 Fixed cache key to properly handle when the document does not
+  include `Mongoid::Timestamps::Updated`. (Arthur Nogueira Neves)
+
+## 2.5.1
+
+### Resolved Issues
+
+* \#2492 Backport cascading callbacks performance and memory fixes from
+  3.0.0-stable.
+
+* \#2464 Backport the nested attributes fix for keeping many relations in
+  memory when updating attributes. (Chris Thompson)
+
+## 2.5.0
+
+### New Features
+
+* This is a release to support the 1.7.0 and higher Mongo and BSON gems and
+  resolves issues that kept the 2.4.x series locked below 1.6.2
+
+## 2.4.12
 
 ### Resolved Issues
 

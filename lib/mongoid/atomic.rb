@@ -114,9 +114,11 @@ module Mongoid
     #
     # @since 2.1.0
     def atomic_updates
+      process_flagged_destroys
       mods = Modifiers.new
       generate_atomic_updates(mods, self)
       _children.each do |child|
+        child.process_flagged_destroys
         generate_atomic_updates(mods, child)
       end
       mods
@@ -300,6 +302,35 @@ module Mongoid
       self.destroyed = true
       self.flagged_for_destroy = false
       atomic_path
+    end
+
+    # Get the flagged destroys.
+    #
+    # @example Get the flagged destroy.
+    #   document.flagged_destroys
+    #
+    # @return [ Array<Proc> ] The flagged destroys.
+    #
+    # @since 3.0.10
+    def flagged_destroys
+      @flagged_destroys ||= []
+    end
+
+    # Process all the pending flagged destroys from nested attributes.
+    #
+    # @example Process all the pending flagged destroys.
+    #   document.process_flagged_destroys
+    #
+    # @return [ Array ] The cleared array.
+    #
+    # @since 3.0.10
+    def process_flagged_destroys
+      _assigning do
+        flagged_destroys.each do |block|
+          block.call
+        end
+      end
+      flagged_destroys.clear
     end
 
     private

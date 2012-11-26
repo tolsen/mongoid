@@ -108,7 +108,7 @@ module Mongoid
       identity.hash
     end
 
-    # A Document's is identified absolutely by it's class and database id:
+    # A Document's is identified absolutely by its class and database id:
     #
     # Person.first.identity #=> [Person, Moped::BSON::ObjectId('4f775130a04745933a000003')]
     #
@@ -191,8 +191,10 @@ module Mongoid
       return attributes if frozen?
       embedded_relations.each_pair do |name, meta|
         without_autobuild do
-          relation = send(name)
-          attributes[meta.store_as] = relation.as_document unless relation.blank?
+          relation, stored = send(name), meta.store_as
+          if attributes.has_key?(stored) || !relation.blank?
+            attributes[stored] = relation.as_document
+          end
         end
       end
       attributes
@@ -215,11 +217,14 @@ module Mongoid
       unless klass.include?(Mongoid::Document)
         raise ArgumentError, "A class which includes Mongoid::Document is expected"
       end
+
       became = klass.new(as_document.__deep_copy__)
+      became.id = id
       became.instance_variable_set(:@changed_attributes, changed_attributes)
       became.instance_variable_set(:@errors, errors)
       became.instance_variable_set(:@new_record, new_record?)
       became.instance_variable_set(:@destroyed, destroyed?)
+      became.changed_attributes["_type"] = self.class.to_s
       became._type = klass.to_s
       became
     end
@@ -241,7 +246,7 @@ module Mongoid
     # @since 2.4.0
     def cache_key
       return "#{model_key}/new" if new_record?
-      return "#{model_key}/#{id}-#{updated_at.utc.to_s(:number)}" if updated_at
+      return "#{model_key}/#{id}-#{updated_at.utc.to_s(:number)}" unless self[:updated_at].nil?
       "#{model_key}/#{id}"
     end
 

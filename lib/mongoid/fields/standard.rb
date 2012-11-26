@@ -86,6 +86,13 @@ module Mongoid
         @options = options
         @label = options[:label]
         @default_val = options[:default]
+
+        # @todo: Durran, change API in 4.0 to take the class as a parameter.
+        # This is here temporarily to address #2529 without changing the
+        # constructor signature.
+        if default_val.respond_to?(:call)
+          define_default_method(options[:klass])
+        end
       end
 
       # Is the field localized or not?
@@ -124,7 +131,7 @@ module Mongoid
         @object_id_field ||= (type == Moped::BSON::ObjectId)
       end
 
-      # Does the field pre-process it's default value?
+      # Does the field pre-process its default value?
       #
       # @example Does the field pre-process the default?
       #   field.pre_processed?
@@ -186,13 +193,12 @@ module Mongoid
       #
       # @note Ruby's instance_exec was just too slow.
       #
-      # @param [ Document ] doc The document.
+      # @param [ Class, Module ] object The class or module the field is
+      #   defined on.
       #
       # @since 3.0.0
-      def define_default_method(doc)
-        unless doc.respond_to?(default_name)
-          doc.class.__send__(:define_method, default_name, default_val)
-        end
+      def define_default_method(object)
+        object.__send__(:define_method, default_name, default_val)
       end
 
       # Is the field included in the fields that were returned from the
@@ -243,7 +249,6 @@ module Mongoid
       #
       # @since 3.0.0
       def evaluate_default_proc(doc)
-        define_default_method(doc)
         serialize_default(doc.__send__(default_name))
       end
 

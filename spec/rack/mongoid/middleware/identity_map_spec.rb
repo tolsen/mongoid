@@ -42,8 +42,8 @@ describe "Rack::Mongoid::Middleware::IdentityMap" do
         middleware.call(env)
       end
 
-      it "returns the call" do
-        result.should be_empty
+      it "returns the call with the body proxy" do
+        result.should eq([])
       end
 
       it "clears out the identity map" do
