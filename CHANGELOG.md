@@ -3,6 +3,30 @@
 For instructions on upgrading to newer versions, visit
 [mongoid.org](http://mongoid.org/docs/upgrading.html).
 
+## 3.0.15
+
+### Resolved Issues
+
+* \#2600 Instantiate the proper class type for attributes when using
+  multi parameter attributes. (xxswingxx)
+
+* \#2598 Fixed sorting on localized fields with embedded docs.
+
+* \#2588 Block defining methods for dynamic attributes that would be invalid
+  ruby methods. (Matt Sanford)
+
+* \#2587 Fix method clash with `belongs_to` proxies when resetting relation
+  unloaded criteria.
+
+* \#2585 Ensure session configuration options get passed to Moped as symbols.
+
+* \#2584 Allow map/reduce to operate on secondaries if output is set to `inline`.
+
+* \#2582 Ensure `nil` session override can never cause to access a session with
+  name `nil`.
+
+* \#2581 Use strong consistency when reloading documents. (Mark Kremer)
+
 ## 3.0.14
 
 ### Resolved Issues

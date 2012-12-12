@@ -58,7 +58,12 @@ module Mongoid
     #
     # @since 1.0.0
     def read_attribute(name)
-      attributes[name.to_s]
+      normalized = name.to_s
+      if hash_dot_syntax?(normalized)
+        attributes.__nested__(normalized)
+      else
+        attributes[normalized]
+      end
     end
     alias :[] :read_attribute
 
@@ -100,7 +105,8 @@ module Mongoid
       super || (
         Mongoid.allow_dynamic_fields &&
         attributes &&
-        attributes.has_key?(name.to_s.reader)
+        attributes.has_key?(name.to_s.reader) &&
+        name.to_s.valid_method_name?
       )
     end
 
@@ -191,6 +197,8 @@ module Mongoid
     #
     # @since 3.0.0
     def define_dynamic_reader(name)
+      return unless name.valid_method_name?
+
       class_eval <<-READER
         def #{name}
           read_attribute(#{name.inspect})
@@ -209,11 +217,27 @@ module Mongoid
     #
     # @since 3.0.0
     def define_dynamic_writer(name)
+      return unless name.valid_method_name?
+
       class_eval <<-WRITER
         def #{name}=(value)
           write_attribute(#{name.inspect}, value)
         end
       WRITER
+    end
+
+    # Does the string contain dot syntax for accessing hashes?
+    #
+    # @api private
+    #
+    # @example Is the string in dot syntax.
+    #   model.hash_dot_syntax?
+    #
+    # @return [ true, false ] If the string contains a "."
+    #
+    # @since 3.0.15
+    def hash_dot_syntax?(string)
+      string =~ /\./
     end
 
     # Used for allowing accessor methods for dynamic attributes.
