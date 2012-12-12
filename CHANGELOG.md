@@ -3,6 +3,23 @@
 For instructions on upgrading to newer versions, visit
 [mongoid.org](http://mongoid.org/docs/upgrading.html).
 
+## 3.0.14
+
+### Resolved Issues
+
+* \#2575 Prevent end of month times from rounding up since floats are not
+  precise enough to handle usec. (Steve Valaitis)
+
+* \#2573 Don't use i18n for inspection messages.
+
+* \#2571 Remove blank error message from locales. (Jordan Elver)
+
+* \#2568 Fix uniqueness validation for lacalized fields when a scope is also
+  provided.
+
+* \#2552 Ensure `InvalidPath` errors are raised when embedded documents try to
+  get paths from a root selector.
+
 ## 3.0.13
 
 ### Resolved Issues
