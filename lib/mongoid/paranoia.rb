@@ -80,6 +80,7 @@ module Mongoid
     def destroyed?
       (@destroyed ||= false) || !!deleted_at
     end
+    alias :deleted? :destroyed?
 
     # Restores a previously soft-deleted document. Handles this by removing the
     # deleted_at flag.
@@ -96,6 +97,11 @@ module Mongoid
       attributes.delete("deleted_at")
       @destroyed = false
       true
+    end
+
+    # Returns a string representing the documents's key suitable for use in URLs.
+    def to_param
+      new_record? ? nil : to_key.join('-')
     end
 
     private

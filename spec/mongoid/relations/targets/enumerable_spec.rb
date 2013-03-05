@@ -506,6 +506,36 @@ describe Mongoid::Relations::Targets::Enumerable do
     end
   end
 
+  describe "#detect" do
+
+    let(:person) do
+      Person.create
+    end
+
+    let!(:post) do
+      Post.create(person: person, title: "test")
+    end
+
+    let(:criteria) do
+      Post.where(person_id: person.id)
+    end
+
+    let!(:enumerable) do
+      described_class.new(criteria)
+    end
+
+    context "when setting a value on the matching document" do
+
+      before do
+        enumerable.detect{ |post| post.title = "test" }.rating = 10
+      end
+
+      it "sets the value on the instance" do
+        enumerable.detect{ |post| post.title = "test" }.rating.should eq(10)
+      end
+    end
+  end
+
   describe "#each" do
 
     let(:person) do
@@ -708,6 +738,11 @@ describe Mongoid::Relations::Targets::Enumerable do
 
           it "does not load the enumerable" do
             enumerable.should_not be__loaded
+          end
+
+          it "receives query only once" do
+            criteria.should_receive(:first).once
+            first
           end
         end
 
@@ -1128,6 +1163,11 @@ describe Mongoid::Relations::Targets::Enumerable do
 
         it "does not load the enumerable" do
           enumerable.should_not be__loaded
+        end
+
+        it "receives query only once" do
+          criteria.should_receive(:last).once
+          last
         end
       end
 

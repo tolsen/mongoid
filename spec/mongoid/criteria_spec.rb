@@ -1920,7 +1920,7 @@ describe Mongoid::Criteria do
     end
   end
 
-  describe "$gt" do
+  describe "#gt" do
 
     let!(:match) do
       Band.create(member_count: 5)
@@ -1939,7 +1939,7 @@ describe Mongoid::Criteria do
     end
   end
 
-  describe "$gte" do
+  describe "#gte" do
 
     let!(:match) do
       Band.create(member_count: 5)
@@ -2220,8 +2220,20 @@ describe Mongoid::Criteria do
 
       context "when calling first" do
 
+        let!(:criteria) do
+          Post.includes(:person)
+        end
+
+        let!(:context) do
+          criteria.context
+        end
+
+        before do
+          context.should_receive(:eager_load_one).with(post_one).once.and_call_original
+        end
+
         let!(:document) do
-          Post.includes(:person).first
+          criteria.first
         end
 
         it "eager loads for the first document" do
@@ -2239,8 +2251,20 @@ describe Mongoid::Criteria do
 
       context "when calling last" do
 
+        let!(:criteria) do
+          Post.includes(:person)
+        end
+
+        let!(:context) do
+          criteria.context
+        end
+
+        before do
+          context.should_receive(:eager_load_one).with(post_two).once.and_call_original
+        end
+
         let!(:document) do
-          Post.includes(:person).last
+          criteria.last
         end
 
         it "eager loads for the first document" do
@@ -2282,11 +2306,23 @@ describe Mongoid::Criteria do
         end
 
         let!(:criteria) do
-          Person.all.entries
+          Person.all
+        end
+
+        let!(:context) do
+          criteria.context
+        end
+
+        before do
+          context.should_receive(:eager_load).with([ person ]).once.and_call_original
+        end
+
+        let!(:documents) do
+          criteria.entries
         end
 
         it "returns the correct documents" do
-          criteria.should eq([ person ])
+          documents.should eq([ person ])
         end
 
         it "inserts the first document into the identity map" do
@@ -2299,8 +2335,20 @@ describe Mongoid::Criteria do
 
         context "when executing the query twice" do
 
+          let!(:new_criteria) do
+            Person.where(id: person.id)
+          end
+
+          let!(:new_context) do
+            new_criteria.context
+          end
+
+          before do
+            new_context.should_receive(:eager_load_one).with(person).once.and_call_original
+          end
+
           let!(:from_db) do
-            Person.where(id: person.id).first
+            new_criteria.first
           end
 
           let(:mapped) do
@@ -2323,8 +2371,20 @@ describe Mongoid::Criteria do
           Mongoid::IdentityMap.clear
         end
 
+        let(:criteria) do
+          Person.all
+        end
+
+        let!(:context) do
+          criteria.context
+        end
+
+        before do
+          context.should_receive(:eager_load_one).with(person).once.and_call_original
+        end
+
         let!(:from_db) do
-          Person.first
+          criteria.first
         end
 
         it "returns the correct documents" do
@@ -2346,8 +2406,20 @@ describe Mongoid::Criteria do
           Mongoid::IdentityMap.clear
         end
 
+        let(:criteria) do
+          Person.all
+        end
+
+        let!(:context) do
+          criteria.context
+        end
+
+        before do
+          context.should_receive(:eager_load_one).with(person).once.and_call_original
+        end
+
         let!(:from_db) do
-          Person.last
+          criteria.last
         end
 
         it "returns the correct documents" do
@@ -2378,7 +2450,19 @@ describe Mongoid::Criteria do
         end
 
         let!(:criteria) do
-          Person.asc(:_id).limit(1).entries
+          Person.asc(:_id).limit(1)
+        end
+
+        let(:context) do
+          criteria.context
+        end
+
+        before do
+          context.should_receive(:eager_load).with([ person ]).once.and_call_original
+        end
+
+        let!(:documents) do
+          criteria.entries
         end
 
         it "returns the correct documents" do
@@ -2416,11 +2500,23 @@ describe Mongoid::Criteria do
         end
 
         let!(:criteria) do
-          Person.includes(:preferences).entries
+          Person.includes(:preferences)
+        end
+
+        let(:context) do
+          criteria.context
+        end
+
+        before do
+          context.should_receive(:eager_load).with([ person ]).once.and_call_original
+        end
+
+        let!(:documents) do
+          criteria.entries
         end
 
         it "returns the correct documents" do
-          criteria.should eq([ person ])
+          documents.should eq([ person ])
         end
 
         let(:preference_map) do
@@ -2442,8 +2538,20 @@ describe Mongoid::Criteria do
           Mongoid::IdentityMap.clear
         end
 
+        let!(:criteria) do
+          Person.includes(:preferences)
+        end
+
+        let(:context) do
+          criteria.context
+        end
+
+        before do
+          context.should_receive(:eager_load_one).with(person).once.and_call_original
+        end
+
         let!(:from_db) do
-          Person.includes(:preferences).first
+          criteria.first
         end
 
         it "returns the correct documents" do
@@ -2469,8 +2577,20 @@ describe Mongoid::Criteria do
           Mongoid::IdentityMap.clear
         end
 
+        let!(:criteria) do
+          Person.includes(:preferences)
+        end
+
+        let(:context) do
+          criteria.context
+        end
+
+        before do
+          context.should_receive(:eager_load_one).with(person).once.and_call_original
+        end
+
         let!(:from_db) do
-          Person.includes(:preferences).last
+          criteria.last
         end
 
         it "returns the correct documents" do
@@ -2505,7 +2625,19 @@ describe Mongoid::Criteria do
         end
 
         let!(:criteria) do
-          Person.includes(:preferences).asc(:_id).limit(1).entries
+          Person.includes(:preferences).asc(:_id).limit(1)
+        end
+
+        let(:context) do
+          criteria.context
+        end
+
+        before do
+          context.should_receive(:eager_load).with([ person ]).once.and_call_original
+        end
+
+        let!(:documents) do
+          criteria.entries
         end
 
         let(:preference_map) do
@@ -2513,7 +2645,7 @@ describe Mongoid::Criteria do
         end
 
         it "returns the correct documents" do
-          criteria.should eq([ person ])
+          documents.should eq([ person ])
         end
 
         it "inserts the first document into the identity map" do
@@ -2547,11 +2679,23 @@ describe Mongoid::Criteria do
         end
 
         let!(:criteria) do
-          Person.includes(:posts).entries
+          Person.includes(:posts)
+        end
+
+        let(:context) do
+          criteria.context
+        end
+
+        before do
+          context.should_receive(:eager_load).with([ person ]).once.and_call_original
+        end
+
+        let!(:documents) do
+          criteria.entries
         end
 
         it "returns the correct documents" do
-          criteria.should eq([ person ])
+          documents.should eq([ person ])
         end
 
         it "inserts the first document into the identity map" do
@@ -2569,8 +2713,20 @@ describe Mongoid::Criteria do
           Mongoid::IdentityMap.clear
         end
 
+        let!(:criteria) do
+          Person.includes(:posts)
+        end
+
+        let(:context) do
+          criteria.context
+        end
+
+        before do
+          context.should_receive(:eager_load_one).with(person).once.and_call_original
+        end
+
         let!(:from_db) do
-          Person.includes(:posts).first
+          criteria.first
         end
 
         it "returns the correct documents" do
@@ -2583,6 +2739,21 @@ describe Mongoid::Criteria do
 
         it "inserts the second document into the identity map" do
           Mongoid::IdentityMap[Post.collection_name][post_two.id].should eq(post_two)
+        end
+
+        context "when subsequently getting all documents" do
+
+          before do
+            context.should_receive(:eager_load).with([ person ]).once.and_call_original
+          end
+
+          let!(:documents) do
+            criteria.entries
+          end
+
+          it "returns the correct documents" do
+            documents.should eq([ person ])
+          end
         end
       end
 
@@ -2592,8 +2763,20 @@ describe Mongoid::Criteria do
           Mongoid::IdentityMap.clear
         end
 
+        let!(:criteria) do
+          Person.includes(:posts)
+        end
+
+        let(:context) do
+          criteria.context
+        end
+
+        before do
+          context.should_receive(:eager_load_one).with(person).once.and_call_original
+        end
+
         let!(:from_db) do
-          Person.includes(:posts).last
+          criteria.last
         end
 
         it "returns the correct documents" do
@@ -2606,6 +2789,21 @@ describe Mongoid::Criteria do
 
         it "inserts the second document into the identity map" do
           Mongoid::IdentityMap[Post.collection_name][post_two.id].should eq(post_two)
+        end
+
+        context "when subsequently getting all documents" do
+
+          before do
+            context.should_receive(:eager_load).with([ person ]).once.and_call_original
+          end
+
+          let!(:documents) do
+            criteria.entries
+          end
+
+          it "returns the correct documents" do
+            documents.should eq([ person ])
+          end
         end
       end
 
@@ -2624,11 +2822,23 @@ describe Mongoid::Criteria do
         end
 
         let!(:criteria) do
-          Person.includes(:posts).asc(:_id).limit(1).entries
+          Person.includes(:posts).asc(:_id).limit(1)
+        end
+
+        let(:context) do
+          criteria.context
+        end
+
+        before do
+          context.should_receive(:eager_load).with([ person ]).once.and_call_original
+        end
+
+        let!(:documents) do
+          criteria.entries
         end
 
         it "returns the correct documents" do
-          criteria.should eq([ person ])
+          documents.should eq([ person ])
         end
 
         it "inserts the first document into the identity map" do
@@ -2662,11 +2872,23 @@ describe Mongoid::Criteria do
         end
 
         let!(:criteria) do
-          Person.includes(:game).entries
+          Person.includes(:game)
+        end
+
+        let(:context) do
+          criteria.context
+        end
+
+        before do
+          context.should_receive(:eager_load).with([ person ]).once.and_call_original
+        end
+
+        let!(:documents) do
+          criteria.entries
         end
 
         it "returns the correct documents" do
-          criteria.should eq([ person ])
+          documents.should eq([ person ])
         end
 
         it "deletes the replaced document from the identity map" do
@@ -2708,11 +2930,23 @@ describe Mongoid::Criteria do
         end
 
         let!(:criteria) do
-          Person.where(id: person.id).includes(:game).asc(:_id).limit(1).entries
+          Person.where(id: person.id).includes(:game).asc(:_id).limit(1)
+        end
+
+        let(:context) do
+          criteria.context
+        end
+
+        before do
+          context.should_receive(:eager_load).with([ person ]).once.and_call_original
+        end
+
+        let!(:documents) do
+          criteria.entries
         end
 
         it "returns the correct documents" do
-          criteria.should eq([ person ])
+          documents.should eq([ person ])
         end
 
         it "inserts the second document into the identity map" do
@@ -2746,7 +2980,23 @@ describe Mongoid::Criteria do
       context "when providing no options" do
 
         let!(:criteria) do
-          Game.includes(:person).entries
+          Game.includes(:person)
+        end
+
+        let(:context) do
+          criteria.context
+        end
+
+        before do
+          context.
+            should_receive(:eager_load).
+            with([ game_one, game_two ]).
+            once.
+            and_call_original
+        end
+
+        let!(:documents) do
+          criteria.entries
         end
 
         it "returns the correct documents" do
@@ -2765,11 +3015,23 @@ describe Mongoid::Criteria do
       context "when the criteria has limiting options" do
 
         let!(:criteria) do
-          Game.where(id: game_one.id).includes(:person).asc(:_id).limit(1).entries
+          Game.where(id: game_one.id).includes(:person).asc(:_id).limit(1)
+        end
+
+        let(:context) do
+          criteria.context
+        end
+
+        before do
+          context.should_receive(:eager_load).with([ game_one ]).once.and_call_original
+        end
+
+        let!(:documents) do
+          criteria.entries
         end
 
         it "returns the correct documents" do
-          criteria.should eq([ game_one ])
+          documents.should eq([ game_one ])
         end
 
         it "inserts the first document into the identity map" do
@@ -2805,7 +3067,19 @@ describe Mongoid::Criteria do
       end
 
       let!(:criteria) do
-        Person.includes(:posts, :game).entries
+        Person.includes(:posts, :game)
+      end
+
+      let(:context) do
+        criteria.context
+      end
+
+      before do
+        context.should_receive(:eager_load).with([ person ]).once.and_call_original
+      end
+
+      let!(:documents) do
+        criteria.entries
       end
 
       it "returns the correct documents" do

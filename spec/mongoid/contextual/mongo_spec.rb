@@ -100,6 +100,21 @@ describe Mongoid::Contextual::Mongo do
       end
     end
 
+    context "when context is cached" do
+
+      let(:context) do
+        described_class.new(criteria.cache)
+      end
+
+      before do
+        context.query.should_receive(:count).once.and_return(1)
+      end
+
+      it "returns the count cached value after first call" do
+        2.times { context.count.should eq(1) }
+      end
+    end
+
     context "when provided a document" do
 
       let(:context) do
@@ -697,6 +712,30 @@ describe Mongoid::Contextual::Mongo do
 
       it "respects default scope" do
         context.last.should eq(palm)
+      end
+    end
+
+    context "when subsequently calling #first" do
+
+      let!(:depeche_mode) do
+        Band.create(name: "Depeche Mode")
+      end
+
+      let!(:new_order) do
+        Band.create(name: "New Order")
+      end
+
+      let(:criteria) do
+        Band.asc(:name)
+      end
+
+      let(:context) do
+        described_class.new(criteria)
+      end
+
+      it "returns the correnct document" do
+        context.last.should eq(new_order)
+        context.first.should eq(depeche_mode)
       end
     end
   end

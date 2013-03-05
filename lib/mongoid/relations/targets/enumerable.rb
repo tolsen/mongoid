@@ -165,8 +165,8 @@ module Mongoid
           else
             _unloaded.each do |doc|
               document = _added.delete(doc.id) || _loaded.delete(doc.id) || doc
-              yield(document)
               _loaded[document.id] = document
+              yield(document)
             end
           end
           _added.each_pair do |id, doc|
@@ -309,6 +309,30 @@ module Mongoid
           !!@executed
         end
 
+        # Provides the data needed to Marshal.dump an enumerable proxy.
+        #
+        # @example Dump the proxy.
+        #   Marshal.dump(proxy)
+        #
+        # @return [ Array<Object> ] The dumped data.
+        #
+        # @since 3.0.15
+        def marshal_dump
+          [ _added, _loaded, _unloaded ]
+        end
+
+        # Loads the data needed to Marshal.load an enumerable proxy.
+        #
+        # @example Load the proxy.
+        #   Marshal.load(proxy)
+        #
+        # @return [ Array<Object> ] The dumped data.
+        #
+        # @since 3.0.15
+        def marshal_load(data)
+          @_added, @_loaded, @_unloaded = data
+        end
+
         # Reset the enumerable back to its persisted state.
         #
         # @example Reset the enumerable.
@@ -420,8 +444,8 @@ module Mongoid
 
         def matching_document(location)
           _loaded.try(:values).try(location) ||
-            _added[_unloaded.try(location).try(:id)] ||
-            _unloaded.try(location) ||
+            _added[(ul = _unloaded.try(location)).try(:id)] ||
+            ul ||
             _added.values.try(location)
         end
       end

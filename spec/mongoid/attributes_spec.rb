@@ -572,6 +572,25 @@ describe Mongoid::Attributes do
         person.respond_to?(:testing).should be_true
       end
     end
+
+    context "when the provided value needs mongoization" do
+
+      let(:new_years) do
+        DateTime.new(2013, 1, 1, 0, 0, 0)
+      end
+
+      before do
+        person[:new_years] = new_years
+      end
+
+      it "mongoizes the dynamic field" do
+        person.new_years.should be_a(Time)
+      end
+
+      it "keeps the same value" do
+        person.new_years.should eq(new_years)
+      end
+    end
   end
 
   describe "#process" do
@@ -1321,6 +1340,34 @@ describe Mongoid::Attributes do
           it "does not overwrite child attributes if not in the hash" do
             owner.pet.name.should eq("Bingo")
             owner.pet.vet_visits.size.should eq(1)
+          end
+        end
+
+        context "when parent destroy all child on setter" do
+
+          let(:owner) do
+            PetOwner.create!(title: "Mr")
+          end
+
+          let(:pet) do
+            Pet.create!(name: "Kika", pet_owner: owner)
+          end
+
+          let!(:vet_visit) do
+            pet.vet_visits.create!(date: Date.today)
+          end
+
+          before do
+            pet.send(method, { visits_count: 3 })
+            pet.save!
+          end
+
+          it "has 3 new entries" do
+            pet.vet_visits.count.should eq(3)
+          end
+
+          it "persists the changes" do
+            pet.reload.vet_visits.count.should eq(3)
           end
         end
 

@@ -153,6 +153,18 @@ module Mongoid
       end
     end
 
+    # Return the model name of the document.
+    #
+    # @example Return the model name.
+    #   document.model_name
+    #
+    # @return [ String ] The model name.
+    #
+    # @since 3.0.16
+    def model_name
+      self.class.model_name
+    end
+
     # Return the key value for the document.
     #
     # @example Return the key.
@@ -222,7 +234,7 @@ module Mongoid
         raise ArgumentError, "A class which includes Mongoid::Document is expected"
       end
 
-      became = klass.new(as_document.__deep_copy__)
+      became = klass.new(clone_document, without_protection: true)
       became.id = id
       became.instance_variable_set(:@changed_attributes, changed_attributes)
       became.instance_variable_set(:@errors, errors)
@@ -230,6 +242,7 @@ module Mongoid
       became.instance_variable_set(:@destroyed, destroyed?)
       became.changed_attributes["_type"] = self.class.to_s
       became._type = klass.to_s
+      IdentityMap.set(became) unless became.new_record?
       became
     end
 
@@ -325,6 +338,7 @@ module Mongoid
         doc.instance_variable_set(:@attributes, attributes)
         doc.apply_defaults
         IdentityMap.set(doc) unless _loading_revision?
+        yield(doc) if block_given?
         doc.run_callbacks(:initialize) unless doc._initialize_callbacks.empty?
         doc
       end

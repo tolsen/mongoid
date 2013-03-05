@@ -29,6 +29,7 @@ class Person
   field :i, as: :inte, type: Integer
   field :a, as: :array, type: Array
   field :desc, localize: true
+  field :username, default: -> { "arthurnn#{rand(0..10)}" }
 
   index age: 1
   index addresses: 1
@@ -40,7 +41,7 @@ class Person
 
   attr_reader :rescored
 
-  attr_protected :security_code, :owner_id
+  attr_protected :security_code, :owner_id, :appointments
 
   embeds_many :favorites, order: :title.desc, inverse_of: :perp, validate: false
   embeds_many :videos, order: [[ :title, :asc ]], validate: false

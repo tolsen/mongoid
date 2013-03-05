@@ -59,7 +59,7 @@ module Mongoid
         #
         # @since 2.4.0
         def concat(docs)
-          batch_insert(docs)
+          batch_insert(docs) unless docs.empty?
           self
         end
 
@@ -302,7 +302,7 @@ module Mongoid
         def unscoped
           criterion = klass.unscoped
           criterion.embedded = true
-          criterion.documents = _unscoped
+          criterion.documents = _unscoped.delete_if(&:marked_for_destruction?)
           criterion
         end
 

@@ -1,11 +1,170 @@
 # Overview
 
 For instructions on upgrading to newer versions, visit
-[mongoid.org](http://mongoid.org/docs/upgrading.html).
+[mongoid.org](http://mongoid.org/en/mongoid/docs/upgrading.html).
+
+## 3.0.23
+
+### Resolved Issues
+
+* \#2851 Fixed BigDecimal demongoization of NaN values. (nkem)
+
+* \#2841 Calling `delete_all` or `destroy_all` on an embeds many when in the
+  middle of a parent update will now properly execute the deletion.
+  (Arthur Neves)
+
+* \#2835 Fixed clearing of persistence options in uniqueness validator.
+
+* \#2826 Dynamic fields are now properly mongoized.
+
+* \#2822 Marshal load of relations now properly reapplies extensions.
+
+* \#2821 Autosaved relations should be duped in inheriting classes.
+
+## 3.0.22
+
+### Resolved Issues
+
+* \#2812 Fixed criteria on many to many relations when the base document is
+  destroyed and the foreign key has not yet been lazy evaluated.
+
+* \#2796 Don't cascade changes on has_many relations when assigning with
+  a delete.
+
+* \#2795 Fix precision on time conversions. (Tom de Bruijn)
+
+* \#2794 Don't autobuild when reading a relation for validation.
+
+* \#2790 `becomes` now copies embedded documents even if they were protected
+  by mass assignment.
+
+* \#2787 Allow `becomes` to replace the document in the identity map.
+
+* \#2786 Fixed regressed cascading callbacks on destroy not firing.
+
+* \#2784 Fixed uniqueness validation properly getting added to subclasses.
+  (Takeshi Akima)
+
+## 3.0.21
+
+### Resolved Issues
+
+* \#2781 / * \#2777 - Fixed issue with serialization of `DateTime` that was
+  only present in Rails environments.
+
+## 3.0.20
+
+### Resolved Issues
+
+* \#2774 Ensure validations macros for uniqueness, presence, and associated
+  are also available at the instance level.
+
+* \#2772 Localized fields are now properly handled when cloning a document.
+
+* \#2758 `Mongoid.create_indexes` does not fail when cannot constantize class.
+  (Arthur Neves)
+
+* \#2743 Persistence options are no longer cleared when loading revisions.
+  (Arthur Neves)
+
+* \#2741 Fix time mongoization usec rounding errors on MRI and JRuby.
+
+* \#2740 Support integer keys in hash fields when using `read_attribute` with
+  dot notation.
+
+* \#2739 Ensure integer deserialization properly casts to integers.
+
+* \#2733 Many to many relations with `inverse_of: nil` do not persist the
+  inverse relation on `<<` or `push` if the document is already persisted.
+
+* \#2705 Fixed logic around when children can be added to the cascading
+  callbacks list.
+
+## 3.0.19
+
+### Resolved Issues
+
+* Released to revert the changes in \#2703.
+
+## 3.0.18
+
+### Resolved Issues
+
+* \#2707 Calling `find_or_create_by` or `find_by_initialize_by` off a relation
+  with a chained criteria or scope now properly keeps the relations intact on
+  the new or found document.
+
+* \#2699 Resetting a field now removes the name from the changed attributes
+  list. (Subhash Bhushan)
+
+* \#2683 Aliased fields are now supported when executing atomic operations from
+  criteria. (Arthur Neves)
+
+* \#2678 Calling `Criteria#sum` with no matching documents returns `0` instead
+  of `nil`.
+
+* \#2671 Matchers now correctly handle symbol keys. (Jonathan Hyman)
+
+## 3.0.17
+
+### Resolved Issues
+
+* \#2686 Fixed the broken Moped dependency - Moped now must be at least at
+  version 1.2.0.
+
+## 3.0.16
+
+### Resolved Issues
+
+* \#2661 Implement instance level `model_name` for documents.
+
+* \#2651 Ensure `Criteria#type` works properly with both symbol and string
+  keys in the selector.
+
+* \#2647 Ensure `deleted?` and `destroyed?` on paranoid documents return the
+  same value.
+
+* \#2646 Set unloaded doc in memory on enumerable targets before yielding to
+  the block.
+
+* \#2645 Take caching into consideration when asking for counts.
+  (Arthur Nogueira Neves)
+
+* \#2642 Don't batch push empty arrays on embedded documents. (Laszlo Bacsi)
+
+* \#2639 Avoid extra unnecesary queries on new records when building relations
+  off of them.
+
+* \#2638 When a criteria is eager loading, calling `first` or `last` then
+  iterating the entire results properly eager loads the full request.
+
+* \#2618 Validating uniqueness now always uses string consistency by default.
+
+* \#2564 Fixed infinite recursion for cases where a relation getter was
+  overridden and called the setter from that method.
+
+* \#2554 Ensure `unscoped` on an `embeds_many` does not include documents
+  flagged for destruction.
 
 ## 3.0.15
 
 ### Resolved Issues
+
+* \#2630 Fix cascading when the metadata exists but no cascade defined.
+
+* \#2625 Fix `Marshal.dump` and `Marshal.load` of proxies and criteria
+  objects.
+
+* \#2619 Fixed the classes returned by `observed_classes` on an observer
+  when it is observing custom models.
+
+* \#2612 `DocumentNotFound` errors now expose the class in the error
+  instance.
+
+* \#2610 Ensure calling `first` after a `last` that had sorting options resets
+  the sort.
+
+* \#2604 Check pulls and pushes for conflicting updates. (Lucas Souza)
 
 * \#2600 Instantiate the proper class type for attributes when using
   multi parameter attributes. (xxswingxx)
@@ -1286,7 +1445,13 @@ For instructions on upgrading to newer versions, visit
 * \#685 Attempting to use versioning with embedded documents will now
   raise a proper error alerting the developer this is not allowed.
 
-## 2.5.2 (branch: 2.5.0-stable)
+## 2.6.0
+
+### New Features
+
+* \#2709 Backported the `touch` functionality from Mongoid 3.
+
+## 2.5.2
 
 ### Resolved Issues
 

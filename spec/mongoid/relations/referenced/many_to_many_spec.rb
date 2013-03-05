@@ -18,6 +18,40 @@ describe Mongoid::Relations::Referenced::ManyToMany do
 
     describe "##{method}" do
 
+      context "when the inverse_of is nil" do
+
+        let!(:article) do
+          Article.create
+        end
+
+        context "when the child document is new" do
+
+          let(:preference) do
+            Preference.new
+          end
+
+          before do
+            article.preferences.send(method, preference)
+          end
+
+          it "persists the child document" do
+            preference.should be_persisted
+          end
+        end
+
+        context "when the child document is not new" do
+
+          let(:preference) do
+            Preference.create
+          end
+
+          it "does not persist the child document" do
+            preference.should_receive(:save).never
+            article.preferences.send(method, preference)
+          end
+        end
+      end
+
       context "when the parent is a new record" do
 
         let(:person) do
@@ -1526,6 +1560,25 @@ describe Mongoid::Relations::Referenced::ManyToMany do
 
     let(:person) do
       Person.create
+    end
+
+    context "when nothing exists on the relation" do
+
+      context "when the document is destroyed" do
+
+        before do
+          Meat.create!
+        end
+
+        let!(:sandwich) do
+          Sandwich.create!
+        end
+
+        it "returns zero" do
+          sandwich.destroy
+          sandwich.meats.count.should eq(0)
+        end
+      end
     end
 
     context "when documents have been persisted" do

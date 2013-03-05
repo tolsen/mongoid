@@ -725,8 +725,8 @@ describe Mongoid::Relations::Embedded::Many do
             person.addresses.should be_empty
           end
 
-          it "does not delete the child document" do
-            address.should_not be_destroyed
+          it "deletes the child document" do
+            address.should be_destroyed
           end
 
           context "when saving the parent" do
@@ -1228,6 +1228,22 @@ describe Mongoid::Relations::Embedded::Many do
 
       it "saves the new document" do
         address.should be_persisted
+      end
+    end
+
+    context "when concatenating an empty array" do
+
+      let(:person) do
+        Person.create
+      end
+
+      before do
+        person.addresses.should_not_receive(:batch_insert)
+        person.addresses.concat([])
+      end
+
+      it "doesn't update the target" do
+        person.addresses.should be_empty
       end
     end
 
@@ -3466,6 +3482,29 @@ describe Mongoid::Relations::Embedded::Many do
           record.reload.name.should eq("Apparat")
         end
       end
+    end
+  end
+
+  context "when embedded documents get marshalled" do
+
+    let(:person) do
+      Person.create
+    end
+
+    let!(:addresses) do
+      person.addresses
+    end
+
+    let!(:dumped) do
+      Marshal.dump(addresses)
+    end
+
+    let!(:loaded) do
+      Marshal.load(dumped)
+    end
+
+    it "keeps the proxy extensions when remarshalling" do
+      loaded.extension.should eq("Testing")
     end
   end
 end

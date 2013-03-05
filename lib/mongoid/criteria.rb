@@ -1,5 +1,6 @@
 # encoding: utf-8
 require "mongoid/criterion/inspection"
+require "mongoid/criterion/marshalable"
 require "mongoid/criterion/scoping"
 
 module Mongoid
@@ -15,6 +16,7 @@ module Mongoid
     include Contextual
     include Origin::Queryable
     include Criterion::Inspection
+    include Criterion::Marshalable
     include Criterion::Scoping
 
     attr_accessor :embedded, :klass
@@ -58,8 +60,8 @@ module Mongoid
     # @return [ Document ] A non-persisted document.
     #
     # @since 2.0.0
-    def build(attrs = {})
-      create_document(:new, attrs)
+    def build(attrs = {}, &block)
+      create_document(:new, attrs, &block)
     end
     alias :new :build
 
@@ -100,8 +102,8 @@ module Mongoid
     # @return [ Document ] A newly created document.
     #
     # @since 2.0.0.rc.1
-    def create(attrs = {})
-      create_document(:create, attrs)
+    def create(attrs = {}, &block)
+      create_document(:create, attrs, &block)
     end
 
     # Create a document in the database given the selector and return it.
@@ -119,8 +121,8 @@ module Mongoid
     # @return [ Document ] A newly created document.
     #
     # @since 3.0.0
-    def create!(attrs = {})
-      create_document(:create!, attrs)
+    def create!(attrs = {}, &block)
+      create_document(:create!, attrs, &block)
     end
 
     # Get the documents from the embedded criteria.
@@ -241,6 +243,32 @@ module Mongoid
       ids = args.__find_args__
       raise_invalid if ids.any?(&:nil?)
       for_ids(ids).execute_or_raise(ids, args.multi_arged?)
+    end
+
+    # Find the first +Document+ given the conditions, or creates a new document
+    # with the conditions that were supplied.
+    #
+    # @example Find or create the document.
+    #   Person.find_or_create_by(:attribute => "value")
+    #
+    # @param [ Hash ] attrs The attributes to check.
+    #
+    # @return [ Document ] A matching or newly created document.
+    def find_or_create_by(attrs = {}, &block)
+      find_or(:create, attrs, &block)
+    end
+
+    # Find the first +Document+ given the conditions, or initializes a new document
+    # with the conditions that were supplied.
+    #
+    # @example Find or initialize the document.
+    #   Person.find_or_initialize_by(:attribute => "value")
+    #
+    # @param [ Hash ] attrs The attributes to check.
+    #
+    # @return [ Document ] A matching or newly initialized document.
+    def find_or_initialize_by(attrs = {}, &block)
+      find_or(:new, attrs, &block)
     end
 
     # Adds a criterion to the +Criteria+ that specifies an id that must be matched.
@@ -598,15 +626,29 @@ module Mongoid
     # @return [ Document ] The new or saved document.
     #
     # @since 3.0.0
-    def create_document(method, attrs = {})
+    def create_document(method, attrs = {}, &block)
       klass.__send__(method,
         selector.reduce(attrs) do |hash, (key, value)|
           unless key.to_s =~ /\$/ || value.is_a?(Hash)
             hash[key] = value
           end
           hash
-        end
-      )
+        end, &block)
+    end
+
+    # Find the first object or create/initialize it.
+    #
+    # @api private
+    #
+    # @example Find or perform an action.
+    #   Person.find_or(:create, :name => "Dev")
+    #
+    # @param [ Symbol ] method The method to invoke.
+    # @param [ Hash ] attrs The attributes to query or set.
+    #
+    # @return [ Document ] The first or new document.
+    def find_or(method, attrs = {}, &block)
+      where(attrs).first || send(method, attrs, &block)
     end
 
     # Clone or dup the current +Criteria+. This will return a new criteria with
@@ -745,7 +787,9 @@ module Mongoid
     #
     # @since 3.0.3
     def type_selectable?
-      klass.hereditary? && !selector.keys.include?(:_type)
+      klass.hereditary? &&
+        !selector.keys.include?("_type") &&
+        !selector.keys.include?(:_type)
     end
 
     # Get the selector for type selection.

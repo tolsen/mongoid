@@ -492,7 +492,24 @@ describe Mongoid::Document do
     end
   end
 
-  describe "#.instantiate" do
+  describe ".instantiate" do
+
+    context "when passing a block" do
+
+      let(:id) do
+        Moped::BSON::ObjectId.new
+      end
+
+      let(:document) do
+        Band.instantiate("_id" => id, "name" => "Depeche Mode") do |band|
+          band.likes = 1000
+        end
+      end
+
+      it "yields to the block" do
+        document.likes.should eq(1000)
+      end
+    end
 
     context "when an id exists" do
 
@@ -534,6 +551,17 @@ describe Mongoid::Document do
       it "creates a new document" do
         person.should be_a(Person)
       end
+    end
+  end
+
+  describe "#model_name" do
+
+    let(:person) do
+      Person.new
+    end
+
+    it "returns the class model name" do
+      person.model_name.should eq("Person")
     end
   end
 
@@ -909,20 +937,57 @@ describe Mongoid::Document do
 
       context "when the document has embedded documents" do
 
-        let!(:address) do
-          manager.addresses.build(street: "hobrecht")
+        context "when the attribtues are protected" do
+
+          let!(:appointment) do
+            manager.appointments.build
+          end
+
+          let(:person) do
+            manager.becomes(Person)
+          end
+
+          it "copies the embedded documents" do
+            person.appointments.first.should eq(appointment)
+          end
+
+          it "returns new instances" do
+            person.appointments.first.should_not equal(appointment)
+          end
+        end
+
+        context "when the attributes are not protected" do
+
+          let!(:address) do
+            manager.addresses.build(street: "hobrecht")
+          end
+
+          let(:person) do
+            manager.becomes(Person)
+          end
+
+          it "copies the embedded documents" do
+            person.addresses.first.should eq(address)
+          end
+
+          it "returns new instances" do
+            person.addresses.first.should_not equal(address)
+          end
+        end
+      end
+
+      context "when the document has a localize field" do
+
+        let(:manager) do
+          Manager.new(title: "Sir", desc: "description")
         end
 
         let(:person) do
           manager.becomes(Person)
         end
 
-        it "copies the embedded documents" do
-          person.addresses.first.should eq(address)
-        end
-
-        it "returns new instances" do
-          person.addresses.first.should_not equal(address)
+        it "copies the localize attribute" do
+          person.desc.should eq("description")
         end
       end
 
@@ -1175,10 +1240,17 @@ describe Mongoid::Document do
       end
     end
 
+    let!(:account) do
+      person.create_account(name: "savings")
+    end
+
     describe Marshal, ".dump" do
 
       it "successfully dumps the document" do
-        expect { Marshal.dump(person) }.not_to raise_error
+        expect {
+          Marshal.dump(person)
+          Marshal.dump(account)
+        }.not_to raise_error
       end
     end
 
@@ -1186,6 +1258,37 @@ describe Mongoid::Document do
 
       it "successfully loads the document" do
         expect { Marshal.load(Marshal.dump(person)) }.not_to raise_error
+      end
+    end
+  end
+
+  context "when putting a document in the cache" do
+
+    describe ActiveSupport::Cache do
+
+      let(:cache) do
+        ActiveSupport::Cache::MemoryStore.new
+      end
+
+      describe "#fetch" do
+
+        let!(:person) do
+          Person.new
+        end
+
+        let!(:account) do
+          person.create_account(name: "savings")
+        end
+
+        it "stores the parent object" do
+          cache.fetch("key") { person }.should eq(person)
+          cache.fetch("key").should eq(person)
+        end
+
+        it "stores the embedded object" do
+          cache.fetch("key") { account }.should eq(account)
+          cache.fetch("key").should eq(account)
+        end
       end
     end
   end

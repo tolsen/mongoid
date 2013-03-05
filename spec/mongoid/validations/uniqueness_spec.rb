@@ -1297,6 +1297,45 @@ describe Mongoid::Validations::UniquenessValidator do
 
     context "when in an embeds_many" do
 
+      let!(:def_one) do
+        word.definitions.create(description: "1")
+      end
+
+      let!(:def_two) do
+        word.definitions.create(description: "2")
+      end
+
+      context "when a document is being destroyed" do
+
+        before do
+          Definition.validates_uniqueness_of :description
+        end
+
+        after do
+          Definition.reset_callbacks(:validate)
+        end
+
+        context "when changing a document to the destroyed property" do
+
+          let(:attributes) do
+            {
+              definitions_attributes: {
+                "0" => { id: def_one.id, description: "0", "_destroy" => 1 },
+                "1" => { id: def_two.id, description: "1" }
+              }
+            }
+          end
+
+          before do
+            word.attributes = attributes
+          end
+
+          it "returns true" do
+            def_two.should be_valid
+          end
+        end
+      end
+
       context "when the document does not use composite keys" do
 
         context "when no scope is provided" do
@@ -1953,6 +1992,66 @@ describe Mongoid::Validations::UniquenessValidator do
       it "always returns true" do
         pronunciation.should be_valid
       end
+    end
+  end
+
+  context "when describing validation on the instance level" do
+
+    let!(:dictionary) do
+      Dictionary.create!(name: "en")
+    end
+
+    let(:validators) do
+      dictionary.validates_uniqueness_of :name
+    end
+
+    it "adds the validation only to the instance" do
+      validators.should eq([ described_class ])
+    end
+  end
+
+  context "when validation works with inheritance" do
+
+    before do
+      Actor.validates_uniqueness_of :name
+      Actor.create!(name: "Johnny Depp")
+    end
+
+    after do
+      Actor.reset_callbacks(:validate)
+    end
+
+    let!(:subclass_document_with_duplicated_name) do
+      Actress.new(name: "Johnny Depp")
+    end
+
+    it "should be invalid" do
+      subclass_document_with_duplicated_name.tap do |d|
+        d.should be_invalid
+        d.errors[:name].should eq([ "is already taken" ])
+      end
+    end
+  end
+
+  context "when persisting with safe options" do
+
+    before do
+      Person.validates_uniqueness_of(:username)
+      Person.create_indexes
+    end
+
+    let!(:person) do
+      Person.create(ssn: "132-11-1111", username: "random-121312")
+    end
+
+    after do
+      Person.reset_callbacks(:validate)
+    end
+
+    it "transfers the options to the cloned session" do
+      expect {
+        Person.with(safe: true).create!(ssn: "132-11-1111", username: "another1234")
+      }.to raise_error(Moped::Errors::OperationFailure)
     end
   end
 end

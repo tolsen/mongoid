@@ -13,6 +13,7 @@ Gem::Specification.new do |s|
   s.homepage    = "http://mongoid.org"
   s.summary     = "Elegant Persistance in Ruby for MongoDB."
   s.description = "Mongoid is an ODM (Object Document Mapper) Framework for MongoDB, written in Ruby."
+  s.license     = "MIT"
 
   s.required_ruby_version     = ">= 1.9"
   s.required_rubygems_version = ">= 1.3.6"
@@ -20,7 +21,7 @@ Gem::Specification.new do |s|
 
   s.add_dependency("activemodel", ["~> 3.1"])
   s.add_dependency("tzinfo", ["~> 0.3.22"])
-  s.add_dependency("moped", ["~> 1.1"])
+  s.add_dependency("moped", ["~> 1.2"])
   s.add_dependency("origin", ["~> 1.0"])
 
   s.files        = Dir.glob("lib/**/*") + %w(CHANGELOG.md LICENSE README.md Rakefile)
